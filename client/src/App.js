@@ -11,6 +11,7 @@ class App extends Component {
   componentDidMount = async () => {
     try {
       // Get network provider and web3 instance.
+      // await ethereum.enable();
       const web3 = await getWeb3();
 
       // Use web3 to get the user's accounts.
