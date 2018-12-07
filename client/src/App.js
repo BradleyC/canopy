@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import SimpleStorage from "./contracts/SimpleStorage.json";
+import SimpleStorageContract from "./contracts/SimpleStorage.json";
 import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
 
@@ -18,7 +18,7 @@ class App extends Component {
       const accounts = await web3.eth.getAccounts();
 
       // Get the contract instance.
-      const Contract = truffleContract(SimpleStorage);
+      const Contract = truffleContract(SimpleStorageContract);
       Contract.setProvider(web3.currentProvider);
       const instance = await Contract.deployed();
 
