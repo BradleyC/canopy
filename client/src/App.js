@@ -20,7 +20,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 //import BrowserRouter from 'react-router-dom';
 
 import CardStack from './CardStack';
-import PostList from './PostList';
+
 import Article from './Article';
 
 class App extends Component {
@@ -72,13 +72,13 @@ class App extends Component {
   render() {
     return (
       <div>
-        {/* <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
-        {/* <PostList web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
-        {/* (!this.state.web3 || !this.state.accounts || !this.state.contract) ? undefined : this._renderWeb3Components() */}
-
+      
         <BrowserRouter>
           <Dashboard />
         </BrowserRouter>
+
+     {/* <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
+
 
       </div>
       );
@@ -100,9 +100,35 @@ class App extends Component {
 
 class Dashboard extends React.Component {
 
+
+
   render() {
     return (
     <AppBar position="static">
+
+      <div id="dashboard">
+        <div className="menu">
+      
+        <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/CardStack">
+            Home
+          </NavLink>
+          </MenuItem>
+          <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/Article" >
+            Article
+          </NavLink>
+          </MenuItem>
+        </div>
+        <div className="content">
+          <Route exact path="/CardStack" component={CardStack} />
+          <Route exact path="/Article" component={Article} />
+        </div>
+      </div>
+      </AppBar>
+    );
+
+  export default App;
 
       <div id="dashboard">
         <div className="menu">
