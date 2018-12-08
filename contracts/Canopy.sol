@@ -51,10 +51,13 @@ contract Canopy {
 
     /// @dev canopy is currently in Alpha. Expect upgrades; currently following CK pattern for upgrade.
     /// @param _v2Address new address
+    /*
     function setNewAddress(address _v2Address) external onlyGameMaster {
         newContractAddress = _v2Address;
         emit ContractUpgrade(_v2Address);
     }
+    */
+
 
     /*** CORE ***/
     // @dev function to create a new post
@@ -69,7 +72,7 @@ contract Canopy {
         uint256 _timePosted = now;
         address _poster = msg.sender;
         // below: start score = (1 up - 0 down) * (1 voter / 1 second since post)
-        _score = 1;
+        uint _score = 1;
         Post memory _post = Post({
             posterAddress: _poster,
             title: title,
@@ -102,9 +105,10 @@ contract Canopy {
             _score, 
             true
         );
-        return (newPostId, score);
+        return (newPostId, _score);
     }
 
+    /*
     function getPost(uint256 _id) 
         internal
         view
@@ -231,4 +235,5 @@ contract Canopy {
         // line 20
         _;
     }
+
 }

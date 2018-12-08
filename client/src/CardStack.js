@@ -20,6 +20,8 @@
         import TextField from '@material-ui/core/TextField';
         import Button from '@material-ui/core/Button';
 
+
+
         const styles = theme => ({
           card: {
             maxWidth: 800,
@@ -49,8 +51,50 @@
           },
         });
 
+
+      
+
+        
         class RecipeReviewCard extends React.Component {
           state = { expanded: false };
+
+
+          handlePost = async (event) => {
+            const {web3, accounts, contract} = this.props;
+            const amountToStake = web3.utils.toWei(this.state.amountToStake, 'ether');
+            const submission = {
+              ...this.state,
+              amountToStake,
+            };
+            console.log('handlePost', submission);
+            console.log('accounts', accounts);
+            console.log('contract', contract);
+
+            console.log(Object.keys(contract.methods));
+            console.log();
+            const gas = await contract.createPost.estimateGas(submission.title, submission.url, submission.amountToStake);
+            const contractCallOptions = {
+              from: accounts[0],
+              gas: gas + 1000,
+            };
+            const result = await contract.createPost(submission.title, submission.url, submission.amountToStake, contractCallOptions);
+            // const contractCall = contract.methods['createPost(string,string,uint256)'](submission.title, submission.url, submission.amountToStake);
+            // const contractCallOptions = {
+            //   from: accounts[0],
+            //   gas: gas + 1000,
+            // };
+            // const result = contractCall.send(contractCallOptions);
+            console.log('result', result);
+
+            // console.log("EMail: " + this.state.title);
+            // console.log("Password: " + this.state.post);
+          }
+
+          setStateVariable = (key, e) => {
+            e.preventDefault();
+            this.setState({ [key]: e.target.value });
+            // this.setState(state => ({ post: e.target.value }));
+          }
 
           handleExpandClick = () => {
             this.setState(state => ({ expanded: !state.expanded }));
@@ -63,28 +107,32 @@
               <Card className={classes.card}>
               <form>
               <CardHeader
-              avatar={
-                <Avatar aria-label="Recipe" className={classes.avatar}>
-                R
-                </Avatar>
-              }
-              action={
-                <IconButton>
-                <MoreVertIcon />
-                </IconButton>
-              }
-              title= "Submit a News Article"
+                avatar={
+                  <Avatar aria-label="Recipe" className={classes.avatar}>
+                    R
+                  </Avatar>
+                }
+                action={
+                  <IconButton>
+                  <MoreVertIcon />
+                  </IconButton>
+                }
+                title="Submit a News Article"
               />
               <TextField id="standard-uncontrolled" label="Title" defaultValue="Article Title" name="Title"
-              className={classes.textField}
-              margin="normal"
-              variant="outlined"
+                className={classes.textField}
+                margin="normal"
+                variant="outlined"
+                onChange={ this.setStateVariable.bind(this, 'title') }
               />
+
               <TextField id="standard-uncontrolled" label="URL" defaultValue="URL"
-              className={classes.textField}
-              margin="normal"
-              variant="outlined"
+                className={classes.textField}
+                margin="normal"
+                variant="outlined"
+                onChange={ this.setStateVariable.bind(this, 'url') }
               />
+
               <TextField
               id="outlined-number"
               label="Amount to Stake"
@@ -96,6 +144,7 @@
               }}
               margin="normal"
               variant="outlined"
+              onChange={ this.setStateVariable.bind(this, 'amountToStake') }
               />
               <CardContent>
               
@@ -107,6 +156,7 @@
               value={this.state.multiline}
               className={classes.textField}
               margin="normal"
+              onChange={ this.setStateVariable.bind(this, 'post') }
               />
 
               <br/>
@@ -129,18 +179,14 @@
               </Card>
               );
 
+            }
           }
-             handlePost: function() {
-    console.log("EMail: " + this.state.title);
-    console.log("Password: " + this.state.post);
-}
-        }
 
-        RecipeReviewCard.propTypes = {
-          classes: PropTypes.object.isRequired,
-        };
+          RecipeReviewCard.propTypes = {
+            classes: PropTypes.object.isRequired,
+          };
 
 
 
 
-        export default withStyles(styles)(RecipeReviewCard);
+          export default withStyles(styles)(RecipeReviewCard);
