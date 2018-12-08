@@ -3,8 +3,6 @@ pragma solidity ^0.4.24;
 contract Canopy {
 
     /*** DATA HANDLING ***/
-    // add balance increase?
-    // add message
     struct Post {
         address posterAddress;
         string title;
@@ -40,7 +38,6 @@ contract Canopy {
         uint256 score,
         bool active
     );
-    // TODO: event NewVote(uint256 indexed postId, )
     event ContractUpgrade(address indexed newContract);
 
     /*** STORAGE ***/
@@ -69,7 +66,7 @@ contract Canopy {
             uint256,
             uint256
         ){
-        // below: intentionally ignoring warning; time is non-critical
+        // below: intentionally ignoring warning on "now"; time is non-critical
         uint timePosted = now;
         address poster = msg.sender;
         // below: start score = (1 up - 0 down) * (1 voter / 1 second since post)
@@ -211,10 +208,7 @@ contract Canopy {
         uint256 poolValue = address(this).balance;
         require(poolValue >= 0.01 ether, "pool value is too small");
 
-        //check that payout is to posterAddress with onlyPoster
-        //Setting the Variables required
         Post memory p = posts[_postId];
-
         uint totalValue = p.valuePositive + p.valueNegative;
         uint totalRatio = 100 * sqrt(p.valuePositive) / sqrt(p.valueNegative);
         uint basePaymentToPoster = p.stake * (100 * sqrt(p.valuePositive) / sqrt(totalValue)) / 100 + p.valuePositive;
