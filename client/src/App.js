@@ -1,7 +1,9 @@
 import React, { Component } from "react";import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
-import CanopyContract from "./contracts/Canopy.json"
+import CanopyContract from "./contracts/Canopy.json";
 import "./App.css";
+//added import for BrowserRouter and Route
+import { BrowserRouter, Route, NavLink } from "react-router-dom";
 
 
 //APPBAR IMPORTS
@@ -12,14 +14,30 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
+import AppBarTest from './AppBarTest';
+import MenuItem from '@material-ui/core/MenuItem';
 
+//import BrowserRouter from 'react-router-dom';
 
 import CardStack from './CardStack';
 import PostList from './PostList';
-//import ArticleReader from './ArticleReader';
+import Article from './Article';
 
 class App extends Component {
   state = { storageValue: 0, web3: null, accounts: null, contract: null };
+
+  handleChange = event => {
+    this.setState({ auth: event.target.checked });
+  };
+
+  handleMenu = event => {
+    this.setState({ anchorEl: event.currentTarget });
+  };
+
+  handleClose = () => {
+    this.setState({ anchorEl: null });
+  };
+
 
   componentDidMount = async () => {
     try {
@@ -46,7 +64,7 @@ class App extends Component {
       // Catch any errors for any of the above operations.
       console.error(
         `Failed to load web3, accounts, or contract. Check console for details.`
-      );
+        );
       console.log(error);
     }
   };
@@ -54,13 +72,58 @@ class App extends Component {
   render() {
     return (
       <div>
-        <AppBar position="static">
-        Test APP
-        </AppBar>
         {/* <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
         {/* <PostList web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
-        { (!this.state.web3 || !this.state.accounts || !this.state.contract) ? undefined : this._renderWeb3Components() }
+        {/* (!this.state.web3 || !this.state.accounts || !this.state.contract) ? undefined : this._renderWeb3Components() */}
+
+        <BrowserRouter>
+          <Dashboard />
+        </BrowserRouter>
+
       </div>
+      );
+    }
+  }
+
+  const styles = {
+  root: {
+    flexGrow: 1,
+  },
+  grow: {
+    flexGrow: 1,
+  },
+  menuButton: {
+    marginLeft: -12,
+    marginRight: 20,
+  },
+};
+
+class Dashboard extends React.Component {
+
+  render() {
+    return (
+    <AppBar position="static">
+
+      <div id="dashboard">
+        <div className="menu">
+      
+        <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/CardStack">
+            Home
+          </NavLink>
+          </MenuItem>
+          <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/Article" >
+            Article
+          </NavLink>
+          </MenuItem>
+        </div>
+        <div className="content">
+          <Route exact path="/CardStack" component={CardStack} />
+          <Route exact path="/Article" component={Article} />
+        </div>
+      </div>
+      </AppBar>
     );
   }
 
@@ -74,7 +137,3 @@ class App extends Component {
 }
 
 export default App;
-
-
-
-
