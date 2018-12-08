@@ -42,6 +42,7 @@ contract Canopy {
 
     /*** STORAGE ***/
     Post[] public posts;
+    uint public numPosts;
     address[] internal participants; // used for rolling jackpot
 
     mapping (uint256 => address) public postIdToOwner;
@@ -86,7 +87,9 @@ contract Canopy {
             active: true
         });
 
-        uint256 newPostId = posts.push(post) - 1;
+        numPosts = posts.push(post) - 1;
+        postIdToOwner[numPosts] = poster;
+        postIdToVoteTokens[numPosts] = 0;
         userPostCount[poster]++;
         participants.push(msg.sender);
         emit NewPost(
@@ -209,6 +212,7 @@ contract Canopy {
         require(poolValue >= 0.01 ether, "pool value is too small");
 
         Post memory p = posts[_postId];
+
         uint totalValue = p.valuePositive + p.valueNegative;
         uint totalRatio = 100 * sqrt(p.valuePositive) / sqrt(p.valueNegative);
         uint basePaymentToPoster = p.stake * (100 * sqrt(p.valuePositive) / sqrt(totalValue)) / 100 + p.valuePositive;
