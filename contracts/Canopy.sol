@@ -161,14 +161,53 @@ contract Canopy {
     
     function rankPosts() internal {}
 
-    // @dev read from mapping
-    function getPostsByTime() external {}
+    // @dev read from mapping - show 100 of the most recent
+    function getMostRecentPost() external {
+        //since IDs are sequential, length of array = most recent post id
+        return posts.length;
+    }
 
     // @dev read from mapping
-    function getScoreById() internal {}
+    function getScoreById(uint _postID) internal {
+        return posts[_postID].score;
+    }
 
     // @dev user can choose when to cash out, make sure to check address
-    function cashOut() external payable onlyPoster {}
+    function cashOut(uint _postId) external payable onlyPoster {
+        //check that payout is to posterAddress with onlyPoster
+        //Setting the Variables required
+        uint _paymentToPoster;
+        uint _bonusPayout;
+        uint _bonusPayoutVoters;
+        uint _totalBonus;
+        uint _totalValue;
+        uint _totalPayout;
+
+        Post memory p = posts[_postId];
+        _totalValue = p.valuePositive + p.valueNegative;
+        _paymentToPoster = p.stake * (p.valuePositive / totalValue) + p.valuePositive;
+        //check that payout is not more than 50% pool balance and stake amount
+        if(poolValue * 0.50 > p.stake) {
+            _bonusPayout = (p.stake * 0.50);
+            _bonusPayoutVoters = (p.stake * 0.50);
+            _totalBonus = _bonusPayout + _bonusPayoutVoters;
+            return _totalBonus;
+        } else if (poolValue * 0.50 <= p.stake) {
+            _totalBonus = 0;
+            return _totalBonus;
+        }  
+        
+        _totalPayout = _paymentToPoster + _totalBonus;
+
+        //check valuePositive is greater than 0.75 of TotalValue
+        require(p.valuePositive >= (0.75*totalValue), "Not a good post");
+        //check that poolValue is positive
+            if(poolValue.balance > 0) {
+        //send payment from poolAddress to posterAddress
+                msg.sender.transfer(address(this)._totalPayout);
+            }
+        p.active = False;
+    }
 
     // @dev BONUS - get post with highest tally of votes
     // @dev BONUS - get user's total score
@@ -176,16 +215,19 @@ contract Canopy {
 
     /*** PERMISSIONS ***/
     // @dev check against addresses 
-    modifier onlyPoster() {
+    modifier onlyPoster(uint _postID) {
+        require(msg.sender == posts[_postID].posterAddress, "Only the poster can use this function");
         _;
     }
 
     modifier onlyMaintainers() {
+        require(msg.sender == maintainersAddress, "Only the maintainer is allowed this action");
         // line 19
         _;
     }
 
     modifier onlyGameMaster() {
+        require(msg.sender == gameMasterAddress, "Only the Game Master is able to change the rules");
         // line 20
         _;
     }
