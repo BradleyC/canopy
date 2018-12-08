@@ -159,7 +159,9 @@ contract Canopy {
     // if vote total > floor, loop through inner array.
     // if vote total < current object in inner array, insert and pop last element
     
-    // @dev read from mapping (only active posts)
+    function rankPosts() internal {}
+
+    // @dev read from mapping
     function getPostsByTime() external {}
 
     // @dev read from mapping
