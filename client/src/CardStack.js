@@ -25,6 +25,7 @@
         const styles = theme => ({
           card: {
             maxWidth: 800,
+                        margin : 'auto',
           },
           media: {
             height: 0,
@@ -109,7 +110,7 @@
               <CardHeader
                 avatar={
                   <Avatar aria-label="Recipe" className={classes.avatar}>
-                    R
+                    C
                   </Avatar>
                 }
                 action={
