@@ -120,7 +120,7 @@ contract Canopy {
             score,
             true
         );
-        return (newPostId, _score);
+        return (newPostId, score);
     }
 
     function getPost(uint256 _id)
@@ -183,7 +183,7 @@ contract Canopy {
                         continue;
                     }
                     else if (( now - c.timePosted) > 2592000) {
-                        cashOut(currentId);
+                        cashOut(i);
                     }
                     else scorePost(i);
                 }
@@ -218,31 +218,31 @@ contract Canopy {
     }
 
     // @dev read from mapping - show 100 of the most recent
-    function getMostRecentPostId() public returns (uint256) {
+    function getMostRecentPostId() public view returns (uint256) {
         //since IDs are sequential, length of array = most recent post id
         return posts.length - 1;
     }
 
     // @dev read from mapping
-    function getScoreById(uint _postId) public returns (uint256) {
+    function getScoreById(uint _postId) public view returns (uint256) {
         return posts[_postId].score;
     }
 
     // @dev user can choose when to cash out, make sure to check address
     function cashOut(uint _postId) public payable onlyPoster(_postId) {
         uint256 poolValue = address(this).balance;
-        require(poolValue >= 0.01, "pool value is too small");
+        require(poolValue >= 0.01 ether, "pool value is too small");
 
         //check that payout is to posterAddress with onlyPoster
         //Setting the Variables required
         Post memory p = posts[_postId];
 
         uint totalValue = p.valuePositive + p.valueNegative;
-        uint totalRatio = sqrt(valuePositive) / sqrt(valueNegative);
-        uint basePaymentToPoster = p.stake * (sqrt(p.valuePositive) / sqrt(totalValue)) + p.valuePositive;
+        uint totalRatio = 100 * sqrt(p.valuePositive) / sqrt(p.valueNegative);
+        uint basePaymentToPoster = p.stake * (100 * sqrt(p.valuePositive) / sqrt(totalValue)) / 100 + p.valuePositive;
 
         // calculate bonus
-        assert(totalRatio < 0.75, "your post failed to meet the quality bar");
+        require(totalRatio < 75, "your post failed to meet the quality bar");
         uint bonusRatio;
         if (totalRatio < 2) {
             bonusRatio = totalRatio;
@@ -254,15 +254,15 @@ contract Canopy {
 
         // make sure that bonus isn't too much of pool
         uint totalBonus;
-        if (bonusPayout < (poolValue * .5)) {
+        if (bonusPayout < (poolValue / 2)) {
             totalBonus = bonusPayout;
         } else {
-            totalBonus = (poolValue * .5);
+            totalBonus = (poolValue / 2);
         }
 
-        totalPayout = basePaymentToPoster + totalBonus;
-        msg.sender.transfer(address(this).totalPayout);
-        posts[_postId].active = False;
+        uint totalPayout = basePaymentToPoster + totalBonus;
+        msg.sender.transfer(totalPayout);
+        posts[_postId].active = false;
         posts[_postId].score = 0;
     }
 
