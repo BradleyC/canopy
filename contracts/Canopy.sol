@@ -1,17 +1,26 @@
 pragma solidity ^0.4.24;
 
+// TODO: make sure stake is actually paid method
+// TODO: stake is going to come in in Wei
+// TODO: this.balance = Wei
+//
+
 contract Canopy {
 
     /*** DATA HANDLING ***/
+    // add balance increase?
+    // add message
     struct Post {
         address posterAddress;
         string title;
         string url;
-        uint256 timePosted;
-        uint256 stake;
+        string content;
+        uint timePosted;
+        uint stake;
+        uint256 voteTokens;
         uint256 score;
-        uint256 valuePositive;
-        uint256 valueNegative;
+        uint valuePositive;
+        uint valueNegative;
         uint256 voterTally;
         bool active;
     }
@@ -26,27 +35,30 @@ contract Canopy {
 
     /*** EVENTS ***/
     event NewPost(
-        uint256 indexed postId, 
-        address posterAddress, 
-        string title, 
-        string url, 
-        uint256 indexed timePosted, 
-        uint256 stake, 
-        uint256 score, 
+        uint256 indexed postId,
+        address posterAddress,
+        string title,
+        string url,
+        string content,
+        uint indexed timePosted,
+        uint stake,
+        uint256 score,
         bool active
     );
     // TODO: event NewVote(uint256 indexed postId, )
+    event ContractUpgrade(address indexed newContract);
 
     /*** STORAGE ***/
-    Post[] posts;
+    Post[] public posts;
+    uint public numPosts;
     address[] private participants; // used for rolling jackpot
-    uint256[40] public top40PostIds;
+    // below: uint256 to make sure we can fully support an enormous pool.
 
     mapping (uint256 => address) public postIdToOwner;
-    mapping (uint256 => uint256) public postIdToTime;
-    mapping (uint256 => uint256) public postIdToScore;
+    mapping (uint256 => uint256) public postIdToVoteTokens; // ?
+    mapping (uint256 => address[]) public postIdToVoters;
     mapping (address => uint256) public userPostCount;
-    mapping (address => uint256) public userToTotalScore;
+    mapping (address => uint256) public userToTotalScore; // not likely
     mapping (address => uint256) public userToVoterTally;
 
     /// @dev canopy is currently in Alpha. Expect upgrades; currently following CK pattern for upgrade.
@@ -61,75 +73,79 @@ contract Canopy {
 
     /*** CORE ***/
     // @dev function to create a new post
-    function createPost(string title, string url, uint256 stake)
-        // TODO: make sure "stake" transfer is executed properly  
-        external 
+    function createPost(string title, string url, string content)
+        // TODO: make sure "stake" transfer is executed properly
+        public
+        payable
         returns (
             uint256,
             uint256
         ){
         // below: intentionally ignoring warning; time is non-critical
-        uint256 _timePosted = now;
-        address _poster = msg.sender;
+        uint timePosted = now;
+        address poster = msg.sender;
         // below: start score = (1 up - 0 down) * (1 voter / 1 second since post)
-        uint _score = 1;
-        Post memory _post = Post({
-            posterAddress: _poster,
+        uint256 score = 1;
+        Post memory post = Post({
+            posterAddress: poster,
             title: title,
             url: url,
-            timePosted: _timePosted,
-            stake: stake,
-            score: _score,
-            // regardless of stake value, self votes always count as one vote
-            valuePositive: 1,
+            content: content,
+            timePosted: timePosted,
+            stake: msg.value,
+            voteTokens: 0,
+            score: score,
+            valuePositive: 0,
             valueNegative: 0,
-            voterTally: 1,
+            voterTally: 0,
             active: true
         });
 
-        uint256 newPostId = posts.push(_post) - 1;
-        postIdToOwner[newPostId] = _poster;
-        postIdToTime[newPostId] = _timePosted;
+        numPosts = posts.push(post) - 1;
+        postIdToOwner[numPosts] = poster;
+        postIdToVoteTokens[numPosts] = 0;
         // below: new post is initiated with score of 1
-        postIdToScore[newPostId]++;
-        userToTotalScore[_poster]++;
-        userPostCount[_poster]++;
-        userToVoterTally[_poster]++;
+        // TODO: remove or refactor, score has been made more ephemeral
+        userToTotalScore[poster]++;
+        userPostCount[poster]++;
+        userToVoterTally[poster]++;
         emit NewPost(
-            newPostId, 
-            _poster, 
-            title, 
-            url, 
-            _timePosted, 
-            stake, 
-            _score, 
+            numPosts,
+            poster,
+            title,
+            url,
+            content,
+            timePosted,
+            msg.value,
+            score,
             true
         );
-        return (newPostId, _score);
+        return (numPosts, score);
     }
 
-    /*
-    function getPost(uint256 _id) 
-        internal
+    function getPost(uint256 _id)
+        public
         view
         returns (
             address posterAddress,
             string title,
             string url,
-            uint256 timePosted,
-            uint256 stake,
+            string content,
+            uint timePosted,
+            uint stake,
             uint256 score,
-            uint256 valuePositive,
-            uint256 valueNegative,
+            uint valuePositive,
+            uint valueNegative,
             uint256 voterTally,
             bool active
         ) {
         Post memory p = posts[_id];
         return(
-            p.posterAddress, 
-            p.title, 
-            p.url, 
-            p.timePosted, 
+            p.posterAddress,
+            p.title,
+            p.url,
+            p.content,
+            p.timePosted,
             p.stake,
             p.score,
             p.valuePositive,
@@ -139,78 +155,109 @@ contract Canopy {
         );
     }
 
-    // @dev fetch the list of ranked posts
-    function getRankedPosts() internal pure {
-        getPost();
-    }
-
     // @dev pass in vote params. return the vote weight instantly, re-rank posts
-    function vote() external returns (uint256) {
-        // voting logics
-        getScoreById();
-        rankPosts();
-        // update mappings
-        return score;
+    function vote(uint256 _postId, bool isPositive) public payable returns (uint256) {
+        Post memory c = posts[_postId];
+        if (isPositive) {
+            c.valuePositive = c.valuePositive + msg.value;
+        } else {
+            c.valueNegative = c.valueNegative + msg.value;
+        }
+        // stake is not modified here. total payout is sort of equal to
+        // stake + valuePositive - valueNegative
+        c.voterTally++;
+        userToVoterTally[c.posterAddress]++;
+        c.score = scorePost(_postId);
+        updateActiveScores();
+        return c.score;
     }
 
-    // @dev process to rank posts
-    // evaluate score and if applicable, add to post top 40
-    function rankPosts() internal {}
+    function updateActiveScores() internal {
+        for (uint i = 0; i < posts.length; i++) {
+            Post memory c = posts[i];
+            // if a post is a month old, pay it out and deactivate
+            if (c.active == true) {
+                if ((now - c.timePosted) > 30 days) {
+                    cashOut(i);
+                } else {
+                    scorePost(i);
+                }
+            }
+        }
+    }
 
-    // ranking
-    // iterate over vote totals in list starting with floor = 0
-    // create inner top 10 array biggest -> smallest
-    // if vote total > floor, loop through inner array.
-    // if vote total < current object in inner array, insert and pop last element
-    
-    function rankPosts() internal {}
+    function scorePost(uint256 _postId) internal returns (uint256) {
+        Post memory p = posts[_postId];
+        // multiply by 100000 to ensure an integer
+        uint256 uproot = sqrt((p.valuePositive) * 100000);
+        uint256 downroot = sqrt((p.valueNegative) * 100000);
+        uint256 totalVoters = p.voterTally;
+        uint256 rootTimeSincePost = sqrt(now - p.timePosted);
+        uint256 _score = (uproot / downroot) * (totalVoters / rootTimeSincePost);
+        posts[_postId].score = _score;
+        return _score;
+    }
+
+    // below method is borrowed from https://github.com/ethereum/dapp-bin/pull/50/files
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
+        if (x == 0) return 0;
+        else if (x <= 3) return 1;
+        uint z = (x + 1) / 2;
+        y = x;
+        while (z < y)
+        {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
 
     // @dev read from mapping - show 100 of the most recent
-    function getMostRecentPost() external {
+    function getMostRecentPostId() public view returns (uint256) {
         //since IDs are sequential, length of array = most recent post id
-        return posts.length;
+        return posts.length - 1;
     }
 
     // @dev read from mapping
-    function getScoreById(uint _postID) internal {
-        return posts[_postID].score;
+    function getScoreById(uint _postId) public view returns (uint256) {
+        return posts[_postId].score;
     }
 
     // @dev user can choose when to cash out, make sure to check address
-    function cashOut(uint _postId) external payable onlyPoster {
+    function cashOut(uint _postId) public payable onlyPoster(_postId) {
+        uint256 poolValue = address(this).balance;
+        require(poolValue >= 0.01 ether, "pool value is too small");
+
         //check that payout is to posterAddress with onlyPoster
         //Setting the Variables required
-        uint _paymentToPoster;
-        uint _bonusPayout;
-        uint _bonusPayoutVoters;
-        uint _totalBonus;
-        uint _totalValue;
-        uint _totalPayout;
-
         Post memory p = posts[_postId];
-        _totalValue = p.valuePositive + p.valueNegative;
-        _paymentToPoster = p.stake * (p.valuePositive / totalValue) + p.valuePositive;
-        //check that payout is not more than 50% pool balance and stake amount
-        if(poolValue * 0.50 > p.stake) {
-            _bonusPayout = (p.stake * 0.50);
-            _bonusPayoutVoters = (p.stake * 0.50);
-            _totalBonus = _bonusPayout + _bonusPayoutVoters;
-            return _totalBonus;
-        } else if (poolValue * 0.50 <= p.stake) {
-            _totalBonus = 0;
-            return _totalBonus;
-        }  
-        
-        _totalPayout = _paymentToPoster + _totalBonus;
 
-        //check valuePositive is greater than 0.75 of TotalValue
-        require(p.valuePositive >= (0.75*totalValue), "Not a good post");
-        //check that poolValue is positive
-            if(poolValue.balance > 0) {
-        //send payment from poolAddress to posterAddress
-                msg.sender.transfer(address(this)._totalPayout);
-            }
-        p.active = False;
+        uint totalValue = p.valuePositive + p.valueNegative;
+        uint totalRatio = 100 * sqrt(p.valuePositive) / sqrt(p.valueNegative);
+        uint basePaymentToPoster = p.stake * (100 * sqrt(p.valuePositive) / sqrt(totalValue)) / 100 + p.valuePositive;
+
+        // calculate bonus
+        require(totalRatio < 75, "your post failed to meet the quality bar");
+        uint bonusRatio;
+        if (totalRatio < 2) {
+            bonusRatio = totalRatio;
+        } else {
+            bonusRatio = 2;
+        }
+
+        uint bonusPayout = p.stake * bonusRatio;
+
+        // make sure that bonus isn't too much of pool
+        uint totalBonus;
+        if (bonusPayout < (poolValue / 2)) {
+            totalBonus = bonusPayout;
+        } else {
+            totalBonus = (poolValue / 2);
+        }
+
+        uint totalPayout = basePaymentToPoster + totalBonus;
+        msg.sender.transfer(totalPayout);
+        posts[_postId].active = false;
+        posts[_postId].score = 0;
     }
 
     // @dev BONUS - get post with highest tally of votes
@@ -218,9 +265,9 @@ contract Canopy {
     // @dev BONUS - get user's total voter tally
 
     /*** PERMISSIONS ***/
-    // @dev check against addresses 
-    modifier onlyPoster(uint _postID) {
-        require(msg.sender == posts[_postID].posterAddress, "Only the poster can use this function");
+    // @dev check against addresses
+    modifier onlyPoster(uint _postId) {
+        require(msg.sender == posts[_postId].posterAddress, "Only the poster can use this function");
         _;
     }
 

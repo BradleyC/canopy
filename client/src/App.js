@@ -1,6 +1,4 @@
-import React, { Component } from "react";
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
-import getWeb3 from "./utils/getWeb3";
+import React, { Component } from "react";import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
 import CanopyContract from "./contracts/Canopy.json";
 import "./App.css";
@@ -22,8 +20,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 //import BrowserRouter from 'react-router-dom';
 
 import CardStack from './CardStack';
-import Article from './Article';
 
+import Article from './Article';
 
 class App extends Component {
   state = { storageValue: 0, web3: null, accounts: null, contract: null };
@@ -54,8 +52,10 @@ class App extends Component {
       // Get the contract instance.
       const Contract = truffleContract(CanopyContract);
       console.log('web3.currentProvider', web3.currentProvider);
+      console.log('web3', web3);
       Contract.setProvider(web3.currentProvider);
       const instance = await Contract.deployed();
+      console.log('contract instance', instance);
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -72,6 +72,7 @@ class App extends Component {
   render() {
     return (
       <div>
+      
         <BrowserRouter>
           <Dashboard />
         </BrowserRouter>
@@ -126,14 +127,39 @@ class Dashboard extends React.Component {
       </div>
       </AppBar>
     );
+
+  export default App;
+
+      <div id="dashboard">
+        <div className="menu">
+      
+        <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/CardStack">
+            Home
+          </NavLink>
+          </MenuItem>
+          <MenuItem onClick={this.handleClose}>
+          <NavLink exact to="/Article" >
+            Article
+          </NavLink>
+          </MenuItem>
+        </div>
+        <div className="content">
+          <Route exact path="/CardStack" component={CardStack} />
+          <Route exact path="/Article" component={Article} />
+        </div>
+      </div>
+      </AppBar>
+    );
+  }
+
+  _renderWeb3Components() {
+    console.log('_renderWeb3Components');
+    return (<div>
+      <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} />
+      <PostList web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} />
+    </div>);
   }
 }
 
-
-
-
-  export default App;
-  
-
-
-
+export default App;
