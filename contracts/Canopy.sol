@@ -50,26 +50,21 @@ contract Canopy {
 
     /*** STORAGE ***/
     Post[] public posts;
-    address[] private participants; // used for rolling jackpot
+    address[] internal participants; // used for rolling jackpot
     // below: uint256 to make sure we can fully support an enormous pool.
 
     mapping (uint256 => address) public postIdToOwner;
-    mapping (uint256 => uint256) public postIdToVoteTokens; // ?
     mapping (uint256 => address[]) public postIdToVoters;
     mapping (address => uint256) public userPostCount;
-    mapping (address => uint256) public userToTotalScore; // not likely
-    mapping (address => uint256) public userToVoterTally;
 
     /// @dev canopy is currently in Alpha. Expect upgrades; currently following CK pattern for upgrade.
     /// @param _v2Address new address
-    /*
+    
     function setNewAddress(address _v2Address) external onlyGameMaster {
         newContractAddress = _v2Address;
         emit ContractUpgrade(_v2Address);
     }
-    */
-
-
+    
     /*** CORE ***/
     // @dev function to create a new post
     function createPost(string title, string url, string content)
@@ -101,13 +96,9 @@ contract Canopy {
         });
 
         uint256 newPostId = posts.push(post) - 1;
-        postIdToOwner[newPostId] = poster;
-        postIdToVoteTokens[newPostId] = 0;
-        // below: new post is initiated with score of 1
-        // TODO: remove or refactor, score has been made more ephemeral
-        userToTotalScore[poster]++;
+        
         userPostCount[poster]++;
-        userToVoterTally[poster]++;
+        participants.push(msg.sender);
         emit NewPost(
             newPostId,
             poster,
@@ -165,13 +156,14 @@ contract Canopy {
         // stake is not modified here. total payout is sort of equal to
         // stake + valuePositive - valueNegative
         c.voterTally++;
-        userToVoterTally[c.posterAddress]++;
+        postIdToVoters[_postId].push(msg.sender);
         c.score = scorePost(_postId);
+        participants.push(msg.sender);
         updateActiveScores();
         return c.score;
     }
 
-    function updateActiveScores() internal {
+    function updateActiveScores() private {
         for (uint i = 0; i < posts.length; i++) {
             Post memory c = posts[i];
             // if a post is a month old, pay it out and deactivate
@@ -185,7 +177,7 @@ contract Canopy {
         }
     }
 
-    function scorePost(uint256 _postId) internal returns (uint256) {
+    function scorePost(uint256 _postId) private returns (uint256) {
         Post memory p = posts[_postId];
         // multiply by 100000 to ensure an integer
         uint256 uproot = sqrt((p.valuePositive) * 100000);
@@ -259,8 +251,25 @@ contract Canopy {
         posts[_postId].score = 0;
     }
 
+    function jackpot() public payable onlyGameMaster {
+        require (address(this).balance > 25 ether, "can't make it rain if there ain't no cloud");
+        uint numerator = address(this).balance;
+        uint denominator = participants.length;
+        uint jackpotBalance = (.70 * address(this).balance);
+        uint maintainerPay = (.10 * address(this).balance);
+        uint perPlayer = jackpot / (numerator / denominator);
+        for (i = 0; i < participants.length; i++) {
+            participants[i].send(perPlayer);
+        }
+        maintainersPot(maintainerPay);
+    }
+
+    function maintainersPot(uint amount) internal payable onlyMaintainers {
+        require(maintainersAddress != 0, "no burning");
+        mantainersAddress.send(amount);
+    }
+
     // @dev BONUS - get post with highest tally of votes
-    // @dev BONUS - get user's total score
     // @dev BONUS - get user's total voter tally
 
     /*** PERMISSIONS ***/
