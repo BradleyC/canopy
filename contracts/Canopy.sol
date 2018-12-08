@@ -183,8 +183,8 @@ contract Canopy {
         uint _totalValue;
         uint _totalPayout;
 
-        _totalValue = p.valuePositive + p.valueNegative;
         Post memory p = posts[_postId];
+        _totalValue = p.valuePositive + p.valueNegative;
         _paymentToPoster = p.stake * (p.valuePositive / totalValue) + p.valuePositive;
         //check that payout is not more than 50% pool balance and stake amount
         if(poolValue * 0.50 > p.stake) {
