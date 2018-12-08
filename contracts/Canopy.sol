@@ -142,12 +142,23 @@ contract Canopy {
 
     // @dev pass in vote params. return the vote weight instantly, re-rank posts
     function vote() external returns (uint256) {
+        // voting logics
         getScoreById();
         rankPosts();
+        // update mappings
         return score;
     }
 
     // @dev process to rank posts
+    // evaluate score and if applicable, add to post top 40
+    function rankPosts() internal {}
+
+    // ranking
+    // iterate over vote totals in list starting with floor = 0
+    // create inner top 10 array biggest -> smallest
+    // if vote total > floor, loop through inner array.
+    // if vote total < current object in inner array, insert and pop last element
+    
     function rankPosts() internal {}
 
     // @dev read from mapping
@@ -157,17 +168,11 @@ contract Canopy {
     function getScoreById() internal {}
 
     // @dev user can choose when to cash out, make sure to check address
-    function cashOut() external payable {}
+    function cashOut() external payable onlyPoster {}
 
     // @dev BONUS - get post with highest tally of votes
     // @dev BONUS - get user's total score
     // @dev BONUS - get user's total voter tally
-
-    // ranking
-    // iterate over vote totals in list starting with floor = 0
-    // create inner top 10 array biggest -> smallest
-    // if vote total > floor, loop through inner array.
-    // if vote total < current object in inner array, insert and pop last element
 
     /*** PERMISSIONS ***/
     // @dev check against addresses 
