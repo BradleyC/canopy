@@ -49,10 +49,9 @@ contract Canopy {
     event ContractUpgrade(address indexed newContract);
 
     /*** STORAGE ***/
-    Post[] posts;
+    Post[] public posts;
     address[] private participants; // used for rolling jackpot
     // below: uint256 to make sure we can fully support an enormous pool.
-    bool _scoresCurrentlyUpdating = false;
 
     mapping (uint256 => address) public postIdToOwner;
     mapping (uint256 => uint256) public postIdToVoteTokens; // ?
@@ -173,22 +172,16 @@ contract Canopy {
     }
 
     function updateActiveScores() internal {
-        if (_scoresCurrentlyUpdating = false) {
-            _scoresCurrentlyUpdating = true;
-            for (uint i = 0; i < posts.length; i++) {
-                Post memory c = posts[i];
-                // if a post is a month old, pay it out and deactivate
-                if (c.active = true) {
-                    if (c.active = false) {
-                        continue;
-                    }
-                    else if (( now - c.timePosted) > 2592000) {
-                        cashOut(i);
-                    }
-                    else scorePost(i);
+        for (uint i = 0; i < posts.length; i++) {
+            Post memory c = posts[i];
+            // if a post is a month old, pay it out and deactivate
+            if (c.active == true) {
+                if ((now - c.timePosted) > 30 days) {
+                    cashOut(i);
+                } else {
+                    scorePost(i);
                 }
             }
-            _scoresCurrentlyUpdating = false;
         }
     }
 
