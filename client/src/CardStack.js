@@ -25,6 +25,7 @@
         const styles = theme => ({
           card: {
             maxWidth: 800,
+                        margin : 'auto',
           },
           media: {
             height: 0,
@@ -52,15 +53,15 @@
         });
 
 
-      
 
-        
+
+
         class RecipeReviewCard extends React.Component {
           state = { expanded: false };
 
 
           handlePost = async (event) => {
-            const {web3, accounts, contract} = this.props;
+            const { web3, accounts, contract } = this.props;
             const amountToStake = web3.utils.toWei(this.state.amountToStake, 'ether');
             const submission = {
               ...this.state,
@@ -109,7 +110,7 @@
               <CardHeader
                 avatar={
                   <Avatar aria-label="Recipe" className={classes.avatar}>
-                    R
+                    C
                   </Avatar>
                 }
                 action={
@@ -147,7 +148,7 @@
               onChange={ this.setStateVariable.bind(this, 'amountToStake') }
               />
               <CardContent>
-              
+
               <TextField id="standard-full-width"
               label="Article"
               multiline rowsMax="20"
@@ -167,7 +168,7 @@
               <Button size="large" color="primary" onClick={this.handlePost}>
               Publish ArticleS
               </Button>
-              
+
               </CardActions>
               </form>
               <Collapse in={this.state.expanded} timeout="auto" unmountOnExit>

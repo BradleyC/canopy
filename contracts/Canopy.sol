@@ -1,10 +1,5 @@
 pragma solidity ^0.4.24;
 
-// TODO: make sure stake is actually paid method
-// TODO: stake is going to come in in Wei
-// TODO: this.balance = Wei
-//
-
 contract Canopy {
 
     /*** DATA HANDLING ***/
@@ -51,7 +46,6 @@ contract Canopy {
     /*** STORAGE ***/
     Post[] public posts;
     address[] internal participants; // used for rolling jackpot
-    // below: uint256 to make sure we can fully support an enormous pool.
 
     mapping (uint256 => address) public postIdToOwner;
     mapping (uint256 => address[]) public postIdToVoters;
@@ -96,11 +90,10 @@ contract Canopy {
         });
 
         uint256 newPostId = posts.push(post) - 1;
-        
         userPostCount[poster]++;
         participants.push(msg.sender);
         emit NewPost(
-            newPostId,
+            numPosts,
             poster,
             title,
             url,
@@ -110,7 +103,7 @@ contract Canopy {
             score,
             true
         );
-        return (newPostId, score);
+        return (numPosts, score);
     }
 
     function getPost(uint256 _id)
@@ -281,13 +274,11 @@ contract Canopy {
 
     modifier onlyMaintainers() {
         require(msg.sender == maintainersAddress, "Only the maintainer is allowed this action");
-        // line 19
         _;
     }
 
     modifier onlyGameMaster() {
         require(msg.sender == gameMasterAddress, "Only the Game Master is able to change the rules");
-        // line 20
         _;
     }
 
