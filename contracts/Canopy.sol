@@ -50,6 +50,7 @@ contract Canopy {
 
     /*** STORAGE ***/
     Post[] public posts;
+    uint public numPosts;
     address[] private participants; // used for rolling jackpot
     // below: uint256 to make sure we can fully support an enormous pool.
 
@@ -100,16 +101,16 @@ contract Canopy {
             active: true
         });
 
-        uint256 newPostId = posts.push(post) - 1;
-        postIdToOwner[newPostId] = poster;
-        postIdToVoteTokens[newPostId] = 0;
+        numPosts = posts.push(post) - 1;
+        postIdToOwner[numPosts] = poster;
+        postIdToVoteTokens[numPosts] = 0;
         // below: new post is initiated with score of 1
         // TODO: remove or refactor, score has been made more ephemeral
         userToTotalScore[poster]++;
         userPostCount[poster]++;
         userToVoterTally[poster]++;
         emit NewPost(
-            newPostId,
+            numPosts,
             poster,
             title,
             url,
@@ -119,7 +120,7 @@ contract Canopy {
             score,
             true
         );
-        return (newPostId, score);
+        return (numPosts, score);
     }
 
     function getPost(uint256 _id)
