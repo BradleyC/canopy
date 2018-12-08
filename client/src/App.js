@@ -1,6 +1,4 @@
-import React, { Component } from "react";
-import SimpleStorageContract from "./contracts/SimpleStorage.json";
-import getWeb3 from "./utils/getWeb3";
+import React, { Component } from "react";import getWeb3 from "./utils/getWeb3";
 import truffleContract from "truffle-contract";
 import CanopyContract from "./contracts/Canopy.json"
 import "./App.css";
@@ -17,6 +15,7 @@ import IconButton from '@material-ui/core/IconButton';
 
 
 import CardStack from './CardStack';
+import PostList from './PostList';
 //import ArticleReader from './ArticleReader';
 
 class App extends Component {
@@ -35,8 +34,10 @@ class App extends Component {
       // Get the contract instance.
       const Contract = truffleContract(CanopyContract);
       console.log('web3.currentProvider', web3.currentProvider);
+      console.log('web3', web3);
       Contract.setProvider(web3.currentProvider);
       const instance = await Contract.deployed();
+      console.log('contract instance', instance);
 
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
@@ -56,14 +57,24 @@ class App extends Component {
         <AppBar position="static">
         Test APP
         </AppBar>
-        <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} />
+        {/* <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
+        {/* <PostList web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} /> */}
+        { (!this.state.web3 || !this.state.accounts || !this.state.contract) ? undefined : this._renderWeb3Components() }
       </div>
     );
+  }
+
+  _renderWeb3Components() {
+    console.log('_renderWeb3Components');
+    return (<div>
+      <CardStack web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} />
+      <PostList web3={this.state.web3} contract={this.state.contract} accounts={this.state.accounts} />
+    </div>);
   }
 }
 
 export default App;
-  
+
 
 
 
