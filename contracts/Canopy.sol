@@ -124,7 +124,6 @@ contract Canopy {
         return (newPostId, _score);
     }
 
-    /*
     function getPost(uint256 _id) 
         internal
         view
