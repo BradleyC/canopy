@@ -40,7 +40,7 @@ contract Canopy {
         string title,
         string url,
         string content,
-        uint indexed timePosted, 
+        uint indexed timePosted,
         uint stake,
         uint256 score,
         bool active
@@ -51,12 +51,11 @@ contract Canopy {
     /*** STORAGE ***/
     Post[] posts;
     address[] private participants; // used for rolling jackpot
-    // below: uint256 to make sure we can fully support an enormous pool. 
-    uint256 public poolValue = address(this).balance;
+    // below: uint256 to make sure we can fully support an enormous pool.
     bool _scoresCurrentlyUpdating = false;
 
     mapping (uint256 => address) public postIdToOwner;
-    mapping (uint256 => uint256) public postIdToVoteTokens; // ?    
+    mapping (uint256 => uint256) public postIdToVoteTokens; // ?
     mapping (uint256 => address[]) public postIdToVoters;
     mapping (address => uint256) public userPostCount;
     mapping (address => uint256) public userToTotalScore; // not likely
@@ -74,9 +73,9 @@ contract Canopy {
 
     /*** CORE ***/
     // @dev function to create a new post
-    function createPost(string title, string url, uint256 stake, string content)
-        // TODO: make sure "stake" transfer is executed properly  
-        external
+    function createPost(string title, string url, string content)
+        // TODO: make sure "stake" transfer is executed properly
+        public
         payable
         returns (
             uint256,
@@ -111,21 +110,21 @@ contract Canopy {
         userPostCount[poster]++;
         userToVoterTally[poster]++;
         emit NewPost(
-            newPostId, 
-            poster, 
-            title, 
-            url, 
+            newPostId,
+            poster,
+            title,
+            url,
             content,
-            timePosted, 
-            stake, 
-            score, 
+            timePosted,
+            msg.value,
+            score,
             true
         );
         return (newPostId, _score);
     }
 
-    function getPost(uint256 _id) 
-        internal
+    function getPost(uint256 _id)
+        public
         view
         returns (
             address posterAddress,
@@ -142,11 +141,11 @@ contract Canopy {
         ) {
         Post memory p = posts[_id];
         return(
-            p.posterAddress, 
-            p.title, 
-            p.url, 
+            p.posterAddress,
+            p.title,
+            p.url,
             p.content,
-            p.timePosted, 
+            p.timePosted,
             p.stake,
             p.score,
             p.valuePositive,
@@ -157,10 +156,15 @@ contract Canopy {
     }
 
     // @dev pass in vote params. return the vote weight instantly, re-rank posts
-    function vote(uint256 _postId, uint256 valuePositive, uint256 valueNegative) external payable returns (uint256) {
+    function vote(uint256 _postId, bool isPositive) public payable returns (uint256) {
         Post memory c = posts[_postId];
-        c.valuePositive = valuePositive;
-        c.valueNegative = valueNegative;
+        if (isPositive) {
+            c.valuePositive = c.valuePositive + msg.value;
+        } else {
+            c.valueNegative = c.valueNegative + msg.value;
+        }
+        // stake is not modified here. total payout is sort of equal to
+        // stake + valuePositive - valueNegative
         c.voterTally++;
         userToVoterTally[c.posterAddress]++;
         c.score = scorePost(_postId);
@@ -194,14 +198,14 @@ contract Canopy {
         uint256 uproot = sqrt((p.valuePositive) * 100000);
         uint256 downroot = sqrt((p.valueNegative) * 100000);
         uint256 totalVoters = p.voterTally;
-        uint256 rootTimeSincePost = sqrt(now - p.timePosted); 
-        uint256 _score = (uproot / downroot)(totalVoters / rootTimeSincePost);
+        uint256 rootTimeSincePost = sqrt(now - p.timePosted);
+        uint256 _score = (uproot / downroot) * (totalVoters / rootTimeSincePost);
         posts[_postId].score = _score;
         return _score;
     }
 
     // below method is borrowed from https://github.com/ethereum/dapp-bin/pull/50/files
-    function sqrt(uint256 x) internal returns (uint256 y) {
+    function sqrt(uint256 x) internal pure returns (uint256 y) {
         if (x == 0) return 0;
         else if (x <= 3) return 1;
         uint z = (x + 1) / 2;
@@ -214,19 +218,21 @@ contract Canopy {
     }
 
     // @dev read from mapping - show 100 of the most recent
-    function getMostRecentPost() external {
+    function getMostRecentPostId() public returns (uint256) {
         //since IDs are sequential, length of array = most recent post id
-        return posts.length;
+        return posts.length - 1;
     }
 
     // @dev read from mapping
-    function getScoreById(uint _postId) internal {
+    function getScoreById(uint _postId) public returns (uint256) {
         return posts[_postId].score;
     }
 
     // @dev user can choose when to cash out, make sure to check address
-    function cashOut(uint _postId) external payable onlyPoster(_postId) {
-        require(poolValue > 0, "no bad checks");
+    function cashOut(uint _postId) public payable onlyPoster(_postId) {
+        uint256 poolValue = address(this).balance;
+        require(poolValue >= 0.01, "pool value is too small");
+
         //check that payout is to posterAddress with onlyPoster
         //Setting the Variables required
         Post memory p = posts[_postId];
@@ -234,22 +240,26 @@ contract Canopy {
         uint totalValue = p.valuePositive + p.valueNegative;
         uint totalRatio = sqrt(valuePositive) / sqrt(valueNegative);
         uint basePaymentToPoster = p.stake * (sqrt(p.valuePositive) / sqrt(totalValue)) + p.valuePositive;
-        
-        // calculate bonus 
-        while (totalRatio >= .75) {
-            if (totalRatio < 2) {
-                uint bonusRatio = totalRatio;
-            }
-        else bonusRatio = 2; }
+
+        // calculate bonus
+        assert(totalRatio < 0.75, "your post failed to meet the quality bar");
+        uint bonusRatio;
+        if (totalRatio < 2) {
+            bonusRatio = totalRatio;
+        } else {
+            bonusRatio = 2;
+        }
 
         uint bonusPayout = p.stake * bonusRatio;
-        
+
         // make sure that bonus isn't too much of pool
+        uint totalBonus;
         if (bonusPayout < (poolValue * .5)) {
-            uint totalBonus = bonusPayout;
+            totalBonus = bonusPayout;
+        } else {
+            totalBonus = (poolValue * .5);
         }
-        else totalBonus = (poolValue * .5);
-        
+
         totalPayout = basePaymentToPoster + totalBonus;
         msg.sender.transfer(address(this).totalPayout);
         posts[_postId].active = False;
@@ -261,7 +271,7 @@ contract Canopy {
     // @dev BONUS - get user's total voter tally
 
     /*** PERMISSIONS ***/
-    // @dev check against addresses 
+    // @dev check against addresses
     modifier onlyPoster(uint _postId) {
         require(msg.sender == posts[_postId].posterAddress, "Only the poster can use this function");
         _;
