@@ -24,13 +24,13 @@ Techniques employed:
   ** up to 2x bonus on initial stake (triggers if at least 75% upvotes)
   ** all ETH not returned / awarded to poster go into contract to fund bonus pool and community reward pool
 
-# Early Experiment
-This is an early experiment in using cryptoeconomics to make social experiences online more like the real world, where every action has a cost and can affect status / reputation.
-Ideally, we would mint a token with a massive supply and low individual value (pocket change) to incent users to interact liberally.
-We'd also like to be able to issue the community pool with a bit more logic, such as attaching a monetary reward to earning badges and other targeted incentives for good behavior.
-
 # Benefits
 This approach to the social feed unlocks three major gaps with the current social media landscape:
   1) Community can retain ownership of the entire platform and its content.
   2) All data labor performed by users is measured and returns some amount of payment to users.
   3) Making every action a transaction creates barriers to those who use asymmetric exploits to subvert online communities (ie bots, sock accounts, trolls)
+
+# What's Next
+This is an early experiment in using cryptoeconomics to make social experiences online more like the real world, where every action has a cost and can affect status / reputation.
+Ideally, we would mint a token with a massive supply and low individual value (pocket change) to incent users to interact liberally.
+We'd also like to be able to issue the community pool with a bit more logic, such as attaching a monetary reward to earning badges and other targeted incentives for good behavior.
