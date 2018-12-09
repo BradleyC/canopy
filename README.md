@@ -1,12 +1,10 @@
 # canopy
 A Social Feed that uses cryptoeconomics to fight spam and provides rewards for good content!
 
-By making every action in the app a transaction, we make 
-
 # The Premise
 We want to build a Social Feed that:
-  a) fights spam & low quality content
-  b) returns value to the users who perform data labor by creating and curating the Feed
+  1) fights spam & low quality content
+  2) returns value to the users who perform data labor by creating and curating the Feed
   
 # The Approach
 Techniques employed:
@@ -32,6 +30,6 @@ We'd also like to be able to issue the community pool with a bit more logic, att
 
 # Benefits
 This approach to the social feed unlocks three major gaps with the current social media landscape:
-  * Community can retain ownership of the entire platform and its content.
-  * All data labor performed by users is measured and returns some amount of payment to users.
-  * Making every action a transaction creates barriers to those who use asymmetric exploits to subvert online communities (ie bots, sock accounts, trolls)
+  1) Community can retain ownership of the entire platform and its content.
+  2) All data labor performed by users is measured and returns some amount of payment to users.
+  3) Making every action a transaction creates barriers to those who use asymmetric exploits to subvert online communities (ie bots, sock accounts, trolls)
