@@ -89,7 +89,6 @@ contract Canopy {
 
         numPosts = posts.push(post) - 1;
         postIdToOwner[numPosts] = poster;
-        postIdToVoteTokens[numPosts] = 0;
         userPostCount[poster]++;
         participants.push(msg.sender);
         emit NewPost(
@@ -246,18 +245,18 @@ contract Canopy {
         require (address(this).balance > 25 ether, "can't make it rain if there ain't no cloud");
         uint numerator = address(this).balance;
         uint denominator = participants.length;
-        uint jackpotBalance = (.70 * address(this).balance);
-        uint maintainerPay = (.10 * address(this).balance);
-        uint perPlayer = jackpot / (numerator / denominator);
-        for (i = 0; i < participants.length; i++) {
-            participants[i].send(perPlayer);
+        uint jackpotBalance = ((7 * address(this).balance) / 10);
+        uint maintainerPay = ((1 * address(this).balance) / 10);
+        uint perPlayer = jackpotBalance / (numerator / denominator);
+        for (uint i = 0; i < participants.length; i++) {
+            participants[i].transfer(perPlayer);
         }
         maintainersPot(maintainerPay);
     }
 
-    function maintainersPot(uint amount) internal payable onlyMaintainers {
+    function maintainersPot(uint amount) internal onlyMaintainers {
         require(maintainersAddress != 0, "no burning");
-        mantainersAddress.send(amount);
+        maintainersAddress.transfer(amount);
     }
 
     // @dev BONUS - get post with highest tally of votes
